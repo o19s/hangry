@@ -1,3 +1,18 @@
+# Created by https://www.gitignore.io/api/java,gradle
+
+.DS_Store
+.idea
+
+gradle
+
+*.iml
+*.ipr
+*.iws
+
+
+### Java ###
+*.class
+>>>>>>> Initial hangry commit
 
 # BlueJ files
 *.ctxt
