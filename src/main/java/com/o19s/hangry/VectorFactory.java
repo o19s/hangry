@@ -6,24 +6,23 @@ import java.util.stream.DoubleStream;
 public class VectorFactory {
 
     private Random _r;
+    byte _seed;
+    short _dims;
 
-    VectorFactory() {
-        _r = new Random();
 
-    }
-
-    VectorFactory(int seed) {
+    VectorFactory(byte seed, short dims) {
         _r = new Random(seed);
-
+        _seed = seed;
+        _dims = dims;
     }
 
 
-    public double[] random(int dims) {
-        return _r.doubles(dims).toArray();
+    public double[] random() {
+        return _r.doubles(_dims).toArray();
     }
 
-    public double[] random(int dims, double min, double max) {
-        return _r.doubles(dims, min, max).toArray();
+    public double[] random(double min, double max) {
+        return _r.doubles(_dims, min, max).toArray();
     }
 
     // Performs a dot product up until the size of vect1 for speed

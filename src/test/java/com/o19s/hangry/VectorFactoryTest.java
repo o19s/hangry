@@ -9,8 +9,8 @@ public class VectorFactoryTest {
 
     @Test
     public void testGeneratesRand() {
-        VectorFactory f = new VectorFactory(12);
-        double vect[] = f.random(300);
+        VectorFactory f = new VectorFactory((byte)12, (short)300);
+        double vect[] = f.random();
         assertEquals(vect.length, 300);
         for (int i = 0; i < vect.length - 1; i++) {
             assertNotEquals(vect[i], vect[i+1]);
@@ -21,8 +21,8 @@ public class VectorFactoryTest {
 
     @Test
     public void testGeneratesRandBounded() {
-        VectorFactory f = new VectorFactory(12);
-        double vect[] = f.random(300, -100.0, -80.0);
+        VectorFactory f = new VectorFactory((byte)12, (short)300);
+        double vect[] = f.random(-100.0, -80.0);
         assertEquals(vect.length, 300);
         for (int i = 0; i < vect.length - 1; i++) {
             assertNotEquals(vect[i], vect[i+1]);
