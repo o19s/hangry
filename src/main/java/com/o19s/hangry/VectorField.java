@@ -1,14 +1,13 @@
 package com.o19s.hangry;
 
+import com.o19s.hangry.randproj.RandomProjectionTree;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexableFieldType;
-import org.apache.lucene.util.BytesRef;
 
 public class VectorField extends Field {
 
-    private RandomProjections _projections;
+    private RandomProjectionTree _projections;
 
     /** Indexed, not tokenized, omits norms, indexes
      *  DOCS_ONLY, not stored. */
@@ -31,14 +30,26 @@ public class VectorField extends Field {
         TYPE_STORED.freeze();
     }
 
-    public VectorField(String name, byte numProjections, byte seed, double[] vect) {
+    public VectorField(String name, double[] vect) {
         super(name, TYPE_STORED);
 
-        _projections = new RandomProjections(numProjections, (short)vect.length, seed);
-        String encodedProjections = _projections.encodeProjection(vect);
+//        _projections = new RandomProjectionTree(100, (short)vect.length, );
+//        String encodedProjections = _projections.encodeProjection(vect);
 
-        setStringValue(encodedProjections);
+        setStringValue("");
+
+
     }
+
+    // Return a token stream
+    //   posn<dim,seed> 11011   2**16
+    // - Construct a query
+    //      T posn,
+    //      11011
+    //         posn <300,23>
+    //         posn <300,42>
+    // every token is it's own projection
+    // every
 
 
 }

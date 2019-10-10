@@ -1,29 +1,6 @@
-package com.o19s.hangry;
+package com.o19s.hangry.randproj;
 
-import java.util.Random;
-import java.util.stream.DoubleStream;
-
-public class VectorFactory {
-
-    private Random _r;
-    byte _seed;
-    short _dims;
-
-
-    VectorFactory(byte seed, short dims) {
-        _r = new Random(seed);
-        _seed = seed;
-        _dims = dims;
-    }
-
-
-    public double[] random() {
-        return _r.doubles(_dims).toArray();
-    }
-
-    public double[] random(double min, double max) {
-        return _r.doubles(_dims, min, max).toArray();
-    }
+public class VectorUtils {
 
     // Performs a dot product up until the size of vect1 for speed
     // if vect2.length < vect1.length, you get a ArrayIndexOutOfBoundsException
@@ -50,6 +27,5 @@ public class VectorFactory {
         }
         return vect;
     }
-
 
 }
