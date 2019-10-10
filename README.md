@@ -77,12 +77,12 @@ We recommend examining the [unit test]() for now until a demo can be created, bu
 Create a factory for random vectors, built from a consistent seed. Then build 10 trees, each of depth 5 (so you'd get tokens like `11001` and `11111` etc)
 
 ```
-    RandomVectorFactory factory = new SeededRandomVectorFactory(0,2);
+    RandomVectorFactory factory = new SeededRandomVectorFactory(/*seed*/0,/*dimensions*/2);
 
     // Create 10 random projected vectors
     RandomProjectionTree rp[] = new RandomProjectionTree[10];
     for (int i = 0; i < rp.length; i++) {
-        rp[i] = new RandomProjectionTree(5, factory);
+        rp[i] = new RandomProjectionTree(/*depth*/5, factory);
     }
 ```
 
