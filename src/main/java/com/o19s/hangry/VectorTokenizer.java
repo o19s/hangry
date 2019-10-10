@@ -17,7 +17,7 @@ public class VectorTokenizer extends TokenStream {
 
     double[] vector;
     RandomProjectionTree[] randomProjections;
-    int currProj;
+    char currProj;
     int depth;
 
 
@@ -27,6 +27,7 @@ public class VectorTokenizer extends TokenStream {
 
 
     VectorTokenizer(double[] vector, RandomProjectionTree[] randomProjections, int depth) {
+        // Need to be 255 or fewer random projection trees
         this.vector = vector;
         this.currProj = 0;
         this.randomProjections = randomProjections;
@@ -42,6 +43,7 @@ public class VectorTokenizer extends TokenStream {
     public boolean incrementToken() throws IOException {
         if (currProj < randomProjections.length) {
             // probably too much copying, this needs to be tighter
+            termAtt.append(currProj);
             termAtt.append(randomProjections[currProj].encodeProjection(vector));
             currProj++;
             return true;
