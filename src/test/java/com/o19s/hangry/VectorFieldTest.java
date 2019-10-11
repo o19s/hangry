@@ -19,6 +19,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -151,4 +152,68 @@ public class VectorFieldTest {
         assertEquals(searcher.doc(docs.scoreDocs[0].doc).get("title"), "doc1");
         assertEquals(searcher.doc(docs.scoreDocs[1].doc).get("title"), "doc2");
     }
+
+
+    public void indexMany(int howMany, int dims, RandomProjectionTree[] trees, IndexWriter iw) throws IOException {
+        SeededRandomVectorFactory seededRandomVectFact = new SeededRandomVectorFactory(0,dims);
+        for (int i = 0; i < howMany; i++) {
+            double vectors[] = seededRandomVectFact.nextVector();
+
+            iw.addDocument(buildDoc(Integer.toString(i), vectors, trees));
+
+        }
+        iw.commit();
+    }
+
+    @Test
+    @Ignore
+    public void testApproximateNearestNeighborPerf() throws IOException {
+
+        RandomVectorFactory factory = new SeededRandomVectorFactory(0, 300);
+
+        // Create 10 random projected vectors
+        RandomProjectionTree rp[] = new RandomProjectionTree[10];
+        for (int i = 0; i < rp.length; i++) {
+            rp[i] = new RandomProjectionTree(5, factory);
+        }
+
+        StandardAnalyzer analyzer = new StandardAnalyzer();
+        Directory dir = new RAMDirectory();
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
+
+        IndexWriter iw = new IndexWriter(dir, config);
+
+        long before = System.nanoTime();
+        indexMany(100000, 300, rp, iw);
+        long after = System.nanoTime();
+        double tookMs = (double)(after - before) / 1000000.0;
+        System.out.printf("%f", tookMs);
+    }
+
+
+    @Test
+    @Ignore
+    public void testApproximateNearestNeighborPerfProfiler() throws IOException {
+
+        RandomVectorFactory factory = new SeededRandomVectorFactory(0, 300);
+
+        // Create 10 random projected vectors
+        RandomProjectionTree rp[] = new RandomProjectionTree[10];
+        for (int i = 0; i < rp.length; i++) {
+            rp[i] = new RandomProjectionTree(5, factory);
+        }
+
+        StandardAnalyzer analyzer = new StandardAnalyzer();
+        Directory dir = new RAMDirectory();
+        IndexWriterConfig config = new IndexWriterConfig(analyzer);
+
+        IndexWriter iw = new IndexWriter(dir, config);
+
+        long before = System.nanoTime();
+        while (true) {
+            indexMany(100000, 300, rp, iw);
+        }
+    }
+
+
 }
