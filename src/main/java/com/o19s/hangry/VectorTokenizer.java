@@ -7,7 +7,7 @@ import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 
 import java.io.IOException;
 
-public class VectorTokenizer extends TokenStream {
+public final class VectorTokenizer extends TokenStream {
 
     // a set of random projections
     // emiting a number of tokens
