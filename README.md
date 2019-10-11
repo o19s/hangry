@@ -1,7 +1,7 @@
 # hangry
-Hangry is a demo of Approximate Nearest Neighbors in Lucene search, using random projections to create terms that can be used to perform ANN using an inverted index.
+Hangry is a demo of Approximate Nearest Neighbors in Lucene search, using random projections to create terms that can be used to perform ANN using an inverted index with no extra data structures.
 
-**This is experimental code**, and a work in progress. For a "demo" see [this test](https://github.com/o19s/hangry/blob/master/src/test/java/com/o19s/hangry/VectorFieldTest.java#L114)
+**This is experimental code**, and a work in progress. Though we welcome your testing and input to make a less of a work in progress! For a "demo" see [this test](https://github.com/o19s/hangry/blob/master/src/test/java/com/o19s/hangry/VectorFieldTest.java#L114)
 
 ## WE NEED YOU to support Vector Search efforts in Lucene 
 
