@@ -14,8 +14,8 @@ public class VectorUtils {
 
     public static double magnitude(double[] vect) {
         double sum = 0.0;
-        for (int i = 0; i < vect.length; i++) {
-            sum += vect[i] * vect[i];
+        for (double v : vect) {
+            sum += v * v;
         }
         return Math.sqrt(sum);
     }

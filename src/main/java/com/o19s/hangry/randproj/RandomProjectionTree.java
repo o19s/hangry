@@ -28,9 +28,9 @@ public class RandomProjectionTree {
 
     public double similarity(double[] vect1, double[] vect2) {
         double same = 0;
-        for (int i = 0; i < _projections.length; i++) {
-            double dp1 = VectorUtils.dotProduct(vect1, _projections[i]);
-            double dp2 = VectorUtils.dotProduct(vect2, _projections[i]);
+        for (double[] projection : _projections) {
+            double dp1 = VectorUtils.dotProduct(vect1, projection);
+            double dp2 = VectorUtils.dotProduct(vect2, projection);
             same += sameSign(dp1, dp2);
 
         }

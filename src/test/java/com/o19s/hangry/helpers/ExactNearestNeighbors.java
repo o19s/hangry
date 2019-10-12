@@ -27,7 +27,7 @@ public class ExactNearestNeighbors {
     }
 
     public static SortedSet<LabeledVector> nearestNeighbors(double[][] vectors, double[] queryVector) {
-        SortedSet<LabeledVector> sortedSet = new TreeSet<LabeledVector>(new LabeledVectorCompare(queryVector));
+        SortedSet<LabeledVector> sortedSet = new TreeSet<>(new LabeledVectorCompare(queryVector));
         for (int i = 0; i < vectors.length; i++) {
             boolean addedDoc = sortedSet.add(new LabeledVector(i, vectors[i]));
             assert(addedDoc);

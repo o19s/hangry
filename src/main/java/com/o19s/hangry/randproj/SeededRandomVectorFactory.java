@@ -1,10 +1,9 @@
 package com.o19s.hangry.randproj;
 
 import java.util.Random;
-import java.util.stream.DoubleStream;
 
 public class SeededRandomVectorFactory implements RandomVectorFactory {
-    // Random vectors regenareted (hopefully consistently!) from
+    // Random vectors regenerated (hopefully consistently!) from
     // an original seed. Good for testing & prototyping. Not sure
     // how I feel about this in prod with things like Java and the OS
     // being upgraded out from underneath us

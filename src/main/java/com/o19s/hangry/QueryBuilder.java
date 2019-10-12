@@ -1,7 +1,6 @@
 package com.o19s.hangry;
 
 import com.o19s.hangry.randproj.RandomProjectionTree;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -35,7 +34,7 @@ public class QueryBuilder {
         BooleanQuery.Builder bqb = new BooleanQuery.Builder();
 
         // collect every query token, turn into prefix query
-        List<BooleanClause> bcs = new ArrayList<BooleanClause>();
+        List<BooleanClause> bcs = new ArrayList<>();
         BooleanQuery bq = new BooleanQuery.Builder().build();
         TermToBytesRefAttribute termAtt = tokenizer.getAttribute(TermToBytesRefAttribute.class);
         while (tokenizer.incrementToken()) {
