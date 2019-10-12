@@ -8,6 +8,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,6 +40,45 @@ public class RandomProjectionTreeTest {
         IndexWriter writer = new IndexWriter(ramDir, config);
 
 
+    }
+
+
+    @Test
+    public void testEncodedSimilarity() {
+        RandomVectorFactory factory = new SeededRandomVectorFactory(0,2);
+
+        double vect1[] = {0.5,0.5};
+        double vect2[] = {0.4,0.5};
+        double vect3[] = {0.4,-0.5};
+        double vect4[] = {-0.4,-0.5};
+
+        int identicals[] = new int[4];
+
+        for (int i = 0; i < 10; i++) {
+            RandomProjectionTree rp = new RandomProjectionTree(10, factory);
+
+            String proj1 = rp.encodeProjection(vect1, 2);
+            String proj2 = rp.encodeProjection(vect2, 2);
+            String proj3 = rp.encodeProjection(vect3, 2);
+            String proj4 = rp.encodeProjection(vect4, 2);
+
+            if (proj1.equals(proj1)) {
+                identicals[0]++;
+            }
+            if (proj2.equals(proj1)) {
+                identicals[1]++;
+            }
+            if (proj3.equals(proj1)) {
+                identicals[2]++;
+            }
+            if (proj4.equals(proj1)) {
+                identicals[3]++;
+            }
+        }
+
+        Assert.assertTrue(identicals[1] < identicals[0]);
+        Assert.assertTrue(identicals[2] < identicals[1]);
+        Assert.assertTrue(identicals[3] < identicals[2]);
     }
 
     @Test

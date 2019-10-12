@@ -21,6 +21,10 @@ public class RandomProjectionTree {
         return Math.signum(val1 * val2);
     }
 
+    public int getDepth() {
+        return _projections.length;
+    }
+
 
     public double similarity(double[] vect1, double[] vect2) {
         double same = 0;
@@ -33,12 +37,12 @@ public class RandomProjectionTree {
         return same / (double)_projections.length;
     }
 
-    public String encodeProjection(double[] vect) {
+    public String encodeProjection(double[] vect, int depth) {
 
         StringBuilder s = new StringBuilder();
 
         double same = 0;
-        for (int i = 0; i < _projections.length; i++) {
+        for (int i = 0; i < depth; i++) {
             double sign = Math.signum(VectorUtils.dotProduct(vect, _projections[i]));
             if (sign > 0) {
                 s.append('1');

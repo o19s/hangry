@@ -20,6 +20,15 @@ public class VectorUtils {
         return Math.sqrt(sum);
     }
 
+    public static double euclidianDistance(double[] vect1, double[] vect2) {
+        double dist = 0.0;
+        for (int i = 0; i < vect1.length; i++) {
+            dist += ((vect1[i] - vect2[i]) * (vect1[i] - vect2[i]));
+        }
+        return Math.sqrt(dist);
+
+    }
+
     public static double[] normalize(double[] vect) {
         double mag = magnitude(vect);
         for (int i = 0; i < vect.length; i++) {

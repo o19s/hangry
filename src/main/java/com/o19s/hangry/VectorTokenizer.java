@@ -17,7 +17,7 @@ public final class VectorTokenizer extends TokenStream {
 
     double[] vector;
     RandomProjectionTree[] randomProjections;
-    char currProj;
+    short currProj;
     int depth;
 
 
@@ -31,7 +31,11 @@ public final class VectorTokenizer extends TokenStream {
         this.vector = vector;
         this.currProj = 0;
         this.randomProjections = randomProjections;
-        this.depth = depth;
+        if (depth == FULL_DEPTH) {
+            this.depth = randomProjections[0].getDepth();
+        } else {
+            this.depth = depth;
+        }
     }
 
 
@@ -41,10 +45,12 @@ public final class VectorTokenizer extends TokenStream {
 
     @Override
     public boolean incrementToken() throws IOException {
+        termAtt.setEmpty();
         if (currProj < randomProjections.length) {
             // probably too much copying, this needs to be tighter
-            termAtt.append(currProj);
-            termAtt.append(randomProjections[currProj].encodeProjection(vector));
+            //termAtt.append((char)(currProj >> 8));
+            termAtt.append((char)currProj);
+            termAtt.append(randomProjections[currProj].encodeProjection(vector, depth));
             currProj++;
             return true;
         }
@@ -55,6 +61,8 @@ public final class VectorTokenizer extends TokenStream {
     @Override
     public final void end() throws IOException {
         this.currProj = 0;
+        termAtt.setEmpty();
+
     }
 
 

@@ -22,20 +22,6 @@ public class RandomVectoryFactoryTest {
     }
 
     @Test
-    public void testGeneratesRandBounded() {
-        SeededRandomVectorFactory f = new SeededRandomVectorFactory((byte)12, (short)300, -100, -80);
-        double vect[] = f.nextVector();
-        assertEquals(vect.length, 300);
-        for (int i = 0; i < vect.length - 1; i++) {
-            assertNotEquals(vect[i], vect[i+1]);
-            assertTrue(vect[i] >= -100.0);
-
-            assertTrue(vect[i] <= -80.0);
-
-        }
-    }
-
-    @Test
     public void testDotProduct() {
         double [] vect1 = {1.0, 1.0};
         double [] vect2 = {2.5, -0.4};
@@ -78,5 +64,17 @@ public class RandomVectoryFactoryTest {
         Assert.assertArrayEquals(vect1, vect2, 0.01);
     }
 
+    @Test
+    public void testEuclideanDistance() {
+        double vect1[] = {2.0, 3.0, 4.0};
+        double vect2[] = {1.0, 1.0, 1.0}; // (2-1)^2 + (3-1)^2 + (4-1)^2 = 1 + 4 + 9
+                                          // sqrt(1 + 4 + 9) = 3.7416
+
+        double expectedEuclidDistance = 3.7416;
+        double euclidDistance = VectorUtils.euclidianDistance(vect1, vect2);
+
+        Assert.assertEquals(euclidDistance, expectedEuclidDistance,0.01);
+
+    }
 
 }

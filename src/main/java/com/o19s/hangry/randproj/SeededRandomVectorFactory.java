@@ -9,11 +9,11 @@ public class SeededRandomVectorFactory implements RandomVectorFactory {
     // how I feel about this in prod with things like Java and the OS
     // being upgraded out from underneath us
 
-    private Random _r;
-    int seed;
-    int dims;
-    double lowerBounds;
-    double upperBounds;
+    protected Random r;
+    protected int seed;
+    protected int dims;
+    protected double lowerBounds;
+    protected double upperBounds;
 
 
     public SeededRandomVectorFactory(int seed, int dims) {
@@ -21,7 +21,7 @@ public class SeededRandomVectorFactory implements RandomVectorFactory {
     }
 
     public SeededRandomVectorFactory(int seed, int dims, double lowerBounds, double upperBounds) {
-        _r = new Random(seed);
+        this.r = new Random(seed);
         this.seed = seed;
         this.dims = dims;
         this.lowerBounds = lowerBounds;
@@ -29,7 +29,7 @@ public class SeededRandomVectorFactory implements RandomVectorFactory {
     }
 
     public double[] random(double min, double max) {
-        return _r.doubles(dims, min, max).toArray();
+        return VectorUtils.normalize(this.r.doubles(dims, min, max).toArray());
     }
 
 
