@@ -47,7 +47,7 @@ public final class VectorTokenizer extends TokenStream {
         termAtt.setEmpty();
         if (currProj < randomProjections.length) {
             // probably too much copying, this needs to be tighter
-            //termAtt.append((char)(currProj >> 8));
+            termAtt.append((char)(currProj >> 8));
             termAtt.append((char)currProj);
             termAtt.append(randomProjections[currProj].encodeProjection(vector, depth));
             currProj++;

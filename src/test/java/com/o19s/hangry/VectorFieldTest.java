@@ -2,6 +2,8 @@ package com.o19s.hangry;
 
 import com.o19s.hangry.helpers.ExactNearestNeighbors;
 import com.o19s.hangry.helpers.LabeledVector;
+import com.o19s.hangry.randproj.BestRandomVectorFactory;
+import com.o19s.hangry.randproj.Histogram;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import com.o19s.hangry.randproj.RandomVectorFactory;
 import com.o19s.hangry.randproj.SeededRandomVectorFactory;
@@ -15,6 +17,9 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
@@ -51,7 +56,8 @@ public class VectorFieldTest {
 
     private IndexSearcher createSearcher(IndexWriter iw) throws IOException {
         IndexReader ir = DirectoryReader.open(iw);
-        return new IndexSearcher(ir);
+        IndexSearcher searcher = new IndexSearcher(ir);
+        return searcher;
     }
 
     @Test
@@ -186,6 +192,7 @@ public class VectorFieldTest {
 
         //double[] hist = new double[20][]; // 20 quantiles of 0.1 for each dimension
 
+        Histogram hist = new Histogram(200);
 
         for (int j = 0; j < vectors[0].length; j++) {
             maxs[j] = Double.MIN_VALUE;
@@ -195,6 +202,9 @@ public class VectorFieldTest {
 
         for (double[] vector : vectors) {
             for (int dim = 0; dim < vector.length; dim++) {
+                if (dim == 0) {
+                    hist.record(vector[dim], i);
+                }
                 if (vector[dim] > maxs[dim]) {
                     maxs[dim] = vector[dim];
                 }
@@ -206,18 +216,19 @@ public class VectorFieldTest {
     }
 
 
-
-
     @Test
     @Ignore
     public void testApproximateNearestNeighborPerf() throws IOException {
 
         // Test params
         int DIMENSIONS = 300;
-        int TOP_N_TO_TEST = 100;
-        int NUM_PROJ_TREES = 255;
-        int PROJ_TREE_DEPTH = 10;
-        int QUERY_PROJ_TREE_DEPTH = 2;
+        int TOP_N_TO_TEST = 50;
+        int NUM_PROJ_TREES = 1023;
+        int PROJ_TREE_DEPTH = 3;
+        int QUERY0_PROJ_TREE_DEPTH = 1; // least precise
+        int QUERY1_PROJ_TREE_DEPTH = 2;
+        int QUERY2_PROJ_TREE_DEPTH = 3; // most precise
+
         int NUM_DOCS = 10000;
 
 
@@ -227,16 +238,16 @@ public class VectorFieldTest {
 
         double[][] allVectors = manyVectors(NUM_DOCS, DIMENSIONS);
 
+        RandomVectorFactory factory = new BestRandomVectorFactory(0, allVectors);
+
+
         double[] mins = new double[DIMENSIONS];
         double[] maxs = new double[DIMENSIONS];
         double[] medians = new double[DIMENSIONS];
-        computeStats(allVectors,medians,mins,maxs);
-
-        //RandomVectorFactory factory = new SteppingVectorFactory(0, DIMENSIONS, medians,mins,maxs);
 
         RandomProjectionTree[] rp = new RandomProjectionTree[NUM_PROJ_TREES];
         for (int i = 0; i < rp.length; i++) {
-            rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, seededFactory);
+            rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, factory);
         }
 
         System.out.println("Indexing");
@@ -247,8 +258,9 @@ public class VectorFieldTest {
         double[] queryVector = seededFactory.nextVector();
 
         SortedSet<LabeledVector> nearestNeighbors = ExactNearestNeighbors.nearestNeighbors(allVectors, queryVector);
+        double farthestDistance = VectorUtils.euclidianDistance(nearestNeighbors.last().vector, queryVector);
 
-        System.out.println("Running Exact Nearest Neighbor");
+        System.out.printf("Running Exact Nearest Neighbor (Farthest %f)\n", farthestDistance);
 
         Iterator<LabeledVector> iter = nearestNeighbors.iterator();
         int i = 0;
@@ -267,7 +279,17 @@ public class VectorFieldTest {
         System.out.println();
 
         QueryBuilder qb = new QueryBuilder(rp);
-        Query q = qb.buildQuery("vector", queryVector, QUERY_PROJ_TREE_DEPTH);
+        Query q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH);
+        Query q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH);
+        Query q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH);
+
+        BooleanQuery.Builder bqb = new BooleanQuery.Builder();
+        bqb.add(q0, BooleanClause.Occur.SHOULD);
+        bqb.add(q1, BooleanClause.Occur.SHOULD);
+        bqb.add(q2, BooleanClause.Occur.SHOULD);
+
+        Query q = bqb.build();
+
         IndexSearcher searcher = createSearcher(iw);
         TopDocs docs = searcher.search(q, TOP_N_TO_TEST);
 

@@ -15,7 +15,11 @@ public class SteppingVectorFactory extends SeededRandomVectorFactory {
         double[] lastVector = super.nextVector();
 
         double[] rVal = new double[dims];
-        rVal[this.counter % dims] = r.nextDouble();
+        for (int i = 0; i < dims; i++) {
+            if (r.nextInt(dims/3) == 0 ) {
+                rVal[i % dims] = r.nextDouble();
+            }
+        }
         this.counter++;
         return VectorUtils.normalize(rVal);
 
