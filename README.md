@@ -30,7 +30,7 @@ v2 doc rp
 
 will have the same sign (+1) or (-1) if they are both on the same side of rp.
 
-If we take LOTS of random vectors (rp1, rp2, rp3), and repeat this, for close vectors, we expect the sign to be the same more often. That is, the close vectors are much more often on teh same side than far apart vectors. So for close vectors v1 and v2, when we take dot products between rp1 rp2 and rp3, we get the resulting signs
+If we take LOTS of random vectors (rp1, rp2, rp3), and repeat this, for close vectors, we expect the sign to be the same more often. That is, the close vectors are much more often on the same side than far apart vectors. So for close vectors v1 and v2, when we take dot products between rp1 rp2 and rp3, we get the resulting signs
 
 |   |  rp1 | rp2  | rp3  |
 |---|------|------|------|

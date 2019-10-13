@@ -3,7 +3,6 @@ package com.o19s.hangry;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 
 import java.io.IOException;
 
