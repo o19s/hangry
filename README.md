@@ -1,7 +1,7 @@
 # hangry
-Hangry is a demo of Approximate Nearest Neighbors in Lucene search, using random projections to create terms that can be used to perform ANN using an inverted index with no extra data structures.
+Hangry is an attempt to do Approximate Nearest Neighbors in Lucene search using just terms in the inverted index, where normal query-time term search can perform ANN
 
-**This is experimental code**, and a work in progress. Though we welcome your testing and input to make a less of a work in progress! For a "demo" see [this test](https://github.com/o19s/hangry/blob/master/src/test/java/com/o19s/hangry/VectorFieldTest.java#L114)
+**This is very experimental code**, and a work in progress. Though we welcome your testing and input to make a less of a work in progress! For a "demo" see [this test](https://github.com/o19s/hangry/blob/master/src/test/java/com/o19s/hangry/VectorFieldTest.java#L114)
 
 ## WE NEED YOU to support Vector Search efforts in Lucene 
 
@@ -10,7 +10,7 @@ Please support these efforts so we can have good vector search in Lucene / Solr
 - [Lucene JIRA](https://issues.apache.org/jira/browse/LUCENE-9004) by Michael Sokolov to implement [Hierarchical Navigable Small World graphs](https://www.semanticscholar.org/paper/Efficient-and-robust-approximate-nearest-neighbor-Malkov-Yashunin/699a2e3b653c69aff5cf7a9923793b974f8ca164) for Approximate Nearest Neighbors
 - [Solr 12890](https://issues.apache.org/jira/browse/SOLR-12890) with ideas from Trey Grainger to implement Solr vector scoring functions
 
-## How Hangry works
+## How Hangry works (Random Projection Edition)
 
 A random projection is a randomly generated vector into a vector space. A random projection *tree* is multiple random vectors, with some notion of hierarchy.
 
