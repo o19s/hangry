@@ -20,15 +20,7 @@ public class BestRandomVectorFactory implements RandomVectorFactory {
     List<Set<Integer>> regions;
     Set<Integer> allSet;
 
-    private static class BiggestSetFirstComp implements Comparator<Set<Integer>> {
-
-        @Override
-        public int compare(Set<Integer> o1, Set<Integer> o2) {
-            return o2.size() - o1.size();
-        }
-    }
-
-    public BestRandomVectorFactory(int seed, double[][] vectors) {
+    public BestRandomVectorFactory(long seed, double[][] vectors) {
         this.seeded = new SeededRandomVectorFactory(seed, vectors[0].length);
         this.allVectors = vectors;
         this.reset();
@@ -67,14 +59,14 @@ public class BestRandomVectorFactory implements RandomVectorFactory {
         return new Pair<Set<Integer>, Set<Integer>>(belowIds, aboveIds);
     }
 
-    @Override
-    public double[] nextVector() {
-        // check if we need to reset
-//        if (regions.first().size() <= 1) {
-//            reset();
-//        }
-
+    private double[] drawVector() {
         // Get biggest region to subdivide
+
+        if (regions.size() == 1) {
+            return seeded.nextVector();
+        }
+
+
         int max = 0;
         Set<Integer> biggestRegion = null;
         for (Set<Integer> ids: regions) {
@@ -94,7 +86,7 @@ public class BestRandomVectorFactory implements RandomVectorFactory {
         double[] bestProjection = null;
         int bestDiff = this.allVectors.length + 1;
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 3; i++) {
             double[] projection = seeded.nextVector();
 
             Histogram hist = VectorUtils.projectionPerformance(biggestRegion, this.allVectors, projection);
@@ -112,6 +104,18 @@ public class BestRandomVectorFactory implements RandomVectorFactory {
                 break;
             }
         }
+        return bestProjection;
+    }
+
+    @Override
+    public double[] nextVector() {
+        // check if we need to reset
+//        if (regions.first().size() <= 1) {
+//            reset();
+//        }
+
+
+        double[] bestProjection = drawVector();
 
         // Apply best projection and regenerate the regions
         List<Set<Integer>> newRegions = new ArrayList<Set<Integer>>();

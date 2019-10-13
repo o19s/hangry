@@ -203,7 +203,7 @@ public class VectorFieldTest {
         for (double[] vector : vectors) {
             for (int dim = 0; dim < vector.length; dim++) {
                 if (dim == 0) {
-                    hist.record(vector[dim], i);
+                    hist.record(vector[dim], dim);
                 }
                 if (vector[dim] > maxs[dim]) {
                     maxs[dim] = vector[dim];
@@ -216,94 +216,103 @@ public class VectorFieldTest {
     }
 
 
+
     @Test
     @Ignore
     public void testApproximateNearestNeighborPerf() throws IOException {
 
         // Test params
         int DIMENSIONS = 300;
-        int TOP_N_TO_TEST = 50;
-        int NUM_PROJ_TREES = 1023;
-        int PROJ_TREE_DEPTH = 3;
+        int TOP_N_TO_TEST = 100;
+        int NUM_PROJ_TREES = 1024;
+        int PROJ_TREE_DEPTH = 12;
+        int MIN_TREE_MATCH = 1;
         int QUERY0_PROJ_TREE_DEPTH = 1; // least precise
         int QUERY1_PROJ_TREE_DEPTH = 2;
         int QUERY2_PROJ_TREE_DEPTH = 3; // most precise
 
         int NUM_DOCS = 10000;
+        int TIMES = 10;
+
+        double precSum = 0;
+
+        for (int run = 0; run < TIMES; run++) {
 
 
-        SeededRandomVectorFactory seededFactory = new SeededRandomVectorFactory(0, DIMENSIONS);
+            SeededRandomVectorFactory seededFactory = new SeededRandomVectorFactory(System.currentTimeMillis(), DIMENSIONS);
 
-        // Create 10 random projected vectors
+            // Create 10 random projected vectors
 
-        double[][] allVectors = manyVectors(NUM_DOCS, DIMENSIONS);
+            double[][] allVectors = manyVectors(NUM_DOCS, DIMENSIONS);
 
-        RandomVectorFactory factory = new BestRandomVectorFactory(0, allVectors);
+            RandomVectorFactory bestFactory = new BestRandomVectorFactory(System.currentTimeMillis(), allVectors);
 
+            double[] mins = new double[DIMENSIONS];
+            double[] maxs = new double[DIMENSIONS];
+            double[] medians = new double[DIMENSIONS];
 
-        double[] mins = new double[DIMENSIONS];
-        double[] maxs = new double[DIMENSIONS];
-        double[] medians = new double[DIMENSIONS];
-
-        RandomProjectionTree[] rp = new RandomProjectionTree[NUM_PROJ_TREES];
-        for (int i = 0; i < rp.length; i++) {
-            rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, factory);
-        }
-
-        System.out.println("Indexing");
-
-        IndexWriter iw = createIndex();
-        indexMany(allVectors, DIMENSIONS, rp, iw);
-
-        double[] queryVector = seededFactory.nextVector();
-
-        SortedSet<LabeledVector> nearestNeighbors = ExactNearestNeighbors.nearestNeighbors(allVectors, queryVector);
-        double farthestDistance = VectorUtils.euclidianDistance(nearestNeighbors.last().vector, queryVector);
-
-        System.out.printf("Running Exact Nearest Neighbor (Farthest %f)\n", farthestDistance);
-
-        Iterator<LabeledVector> iter = nearestNeighbors.iterator();
-        int i = 0;
-        double lastEuclidean = 0;
-        while(iter.hasNext()) {
-            LabeledVector lv = iter.next();
-            System.out.printf("%d  --  %f\n", lv.label, VectorUtils.euclidianDistance(queryVector, lv.vector));
-            if (i > TOP_N_TO_TEST) {
-                lastEuclidean = VectorUtils.euclidianDistance(queryVector, lv.vector);
-                break;
+            RandomProjectionTree rp[] = new RandomProjectionTree[NUM_PROJ_TREES];
+            for (int i = 0; i < rp.length; i++) {
+                rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, seededFactory);
             }
-            i++;
-        }
 
-        System.out.println();
-        System.out.println();
+            System.out.println("Indexing");
 
-        QueryBuilder qb = new QueryBuilder(rp);
-        Query q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH);
-        Query q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH);
-        Query q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH);
+            IndexWriter iw = createIndex();
+            indexMany(allVectors, DIMENSIONS, rp, iw);
 
-        BooleanQuery.Builder bqb = new BooleanQuery.Builder();
-        bqb.add(q0, BooleanClause.Occur.SHOULD);
-        bqb.add(q1, BooleanClause.Occur.SHOULD);
-        bqb.add(q2, BooleanClause.Occur.SHOULD);
+            double[] queryVector = seededFactory.nextVector();
 
-        Query q = bqb.build();
+            SortedSet<LabeledVector> nearestNeighbors = ExactNearestNeighbors.nearestNeighbors(allVectors, queryVector);
+            double farthestDistance = VectorUtils.euclidianDistance(nearestNeighbors.last().vector, queryVector);
 
-        IndexSearcher searcher = createSearcher(iw);
-        TopDocs docs = searcher.search(q, TOP_N_TO_TEST);
+            System.out.printf("Running Exact Nearest Neighbor (Farthest %f)\n", farthestDistance);
 
-        int count = 0;
-        for (i = 0; i < docs.scoreDocs.length; i++) {
-            int docLabel  = Integer.parseInt(searcher.doc(docs.scoreDocs[i].doc).get("title"));
-            double euclideanDistance = VectorUtils.euclidianDistance(allVectors[docLabel],queryVector);
-            if (euclideanDistance < lastEuclidean) {
-                count += 1;
+            Iterator<LabeledVector> iter = nearestNeighbors.iterator();
+            int i = 0;
+            double lastEuclidean = 0;
+            while (iter.hasNext()) {
+                LabeledVector lv = iter.next();
+                System.out.printf("%d  --  %f\n", lv.label, VectorUtils.euclidianDistance(queryVector, lv.vector));
+                if (i > TOP_N_TO_TEST) {
+                    lastEuclidean = VectorUtils.euclidianDistance(queryVector, lv.vector);
+                    break;
+                }
+                i++;
             }
-            System.out.printf("%d - %f - %s\n", docLabel, euclideanDistance, docs.scoreDocs[i].score);
-        }
-        System.out.printf("%d under thresh (prec %f)\n", count, ((double)count / (double)TOP_N_TO_TEST));
 
+            System.out.println();
+            System.out.println();
+
+            QueryBuilder qb = new QueryBuilder(rp);
+            Query q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH, MIN_TREE_MATCH);
+            Query q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH);
+            Query q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH);
+
+            BooleanQuery.Builder bqb = new BooleanQuery.Builder();
+            bqb.add(q0, BooleanClause.Occur.SHOULD);
+            bqb.add(q1, BooleanClause.Occur.SHOULD);
+            bqb.add(q2, BooleanClause.Occur.SHOULD);
+
+            Query q = bqb.build();
+
+            IndexSearcher searcher = createSearcher(iw);
+            TopDocs docs = searcher.search(q, TOP_N_TO_TEST);
+
+            int count = 0;
+            for (i = 0; i < docs.scoreDocs.length; i++) {
+                int docLabel = Integer.parseInt(searcher.doc(docs.scoreDocs[i].doc).get("title"));
+                double euclideanDistance = VectorUtils.euclidianDistance(allVectors[docLabel], queryVector);
+                if (euclideanDistance < lastEuclidean) {
+                    count += 1;
+                }
+                System.out.printf("%d - %f - %s\n", docLabel, euclideanDistance, docs.scoreDocs[i].score);
+            }
+            System.out.printf("%d under thresh (prec %f)\n", count, ((double) count / (double) TOP_N_TO_TEST));
+            precSum +=  ((double) count / (double) TOP_N_TO_TEST);
+        }
+        System.out.println("====================================");
+        System.out.printf("Prec %f\n", precSum / TIMES);
 
     }
 

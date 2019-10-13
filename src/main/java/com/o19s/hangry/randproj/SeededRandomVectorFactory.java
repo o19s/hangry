@@ -9,17 +9,17 @@ public class SeededRandomVectorFactory implements RandomVectorFactory {
     // being upgraded out from underneath us
 
     protected Random r;
-    protected int seed;
+    protected long seed;
     protected int dims;
     protected double lowerBounds;
     protected double upperBounds;
 
 
-    public SeededRandomVectorFactory(int seed, int dims) {
+    public SeededRandomVectorFactory(long seed, int dims) {
         this(seed, dims, -1.0, 1.0);
     }
 
-    public SeededRandomVectorFactory(int seed, int dims, double lowerBounds, double upperBounds) {
+    public SeededRandomVectorFactory(long seed, int dims, double lowerBounds, double upperBounds) {
         this.r = new Random(seed);
         this.seed = seed;
         this.dims = dims;

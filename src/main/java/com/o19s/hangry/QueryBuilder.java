@@ -24,10 +24,14 @@ public class QueryBuilder {
 
 
     public Query buildQuery(String field, double[] queryVector) throws IOException {
-        return this.buildQuery(field, queryVector, VectorTokenizer.FULL_DEPTH);
+        return this.buildQuery(field, queryVector, VectorTokenizer.FULL_DEPTH, 1);
     }
 
     public Query buildQuery(String field, double[] queryVector, int depth) throws IOException {
+        return this.buildQuery(field, queryVector, depth, 1);
+    }
+
+    public Query buildQuery(String field, double[] queryVector, int depth, int minTreeMatch) throws IOException {
         // TODO check depth not larger than
         VectorTokenizer tokenizer = new VectorTokenizer(queryVector, this.trees, depth);
 
@@ -41,6 +45,7 @@ public class QueryBuilder {
         }
         tokenizer.end();
 
+        bqb.setMinimumNumberShouldMatch(minTreeMatch);
         BooleanQuery bq = bqb.build();
         bq.setMaxClauseCount(10000);
         return bq;
