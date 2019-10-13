@@ -1,5 +1,7 @@
 package com.o19s.hangry.randproj;
 
+import java.util.Set;
+
 public class VectorUtils {
 
     // Performs a dot product up until the size of vect1 for speed
@@ -26,7 +28,37 @@ public class VectorUtils {
             dist += ((vect1[i] - vect2[i]) * (vect1[i] - vect2[i]));
         }
         return Math.sqrt(dist);
+    }
 
+    public static double neighorDistance(double[] home, double[] other) {
+        double homeProd = VectorUtils.dotProduct(home, home);
+        double vectProd = VectorUtils.dotProduct(home, other);
+        return vectProd / homeProd;
+    }
+
+
+    public static Histogram projectionPerformance(double[][] allVectors, double[] projection) {
+        Histogram h = new Histogram(100);
+        int vectIdx = 0;
+        for (double[] vector: allVectors) {
+            double neighDist = neighorDistance(projection, vector);
+            h.record(neighDist, vectIdx);
+            vectIdx++;
+        }
+        return h;
+    }
+
+    public static Histogram projectionPerformance(Set<Integer> activeIds, double[][] allVectors, double[] projection) {
+        Histogram h = new Histogram(100);
+        int vectIdx = 0;
+        for (double[] vector: allVectors) {
+            if (activeIds.contains(vectIdx)) {
+                double neighDist = neighorDistance(projection, vector);
+                h.record(neighDist, vectIdx);
+            }
+            vectIdx++;
+        }
+        return h;
     }
 
     public static double[] normalize(double[] vect) {

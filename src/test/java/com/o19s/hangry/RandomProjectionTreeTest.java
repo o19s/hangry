@@ -1,8 +1,11 @@
 package com.o19s.hangry;
 
+import com.o19s.hangry.randproj.BestRandomVectorFactory;
+import com.o19s.hangry.randproj.Histogram;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import com.o19s.hangry.randproj.RandomVectorFactory;
 import com.o19s.hangry.randproj.SeededRandomVectorFactory;
+import com.o19s.hangry.randproj.VectorUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -12,6 +15,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -42,10 +47,37 @@ public class RandomProjectionTreeTest {
 
     }
 
+    public void histogramReport(Histogram hist) {
+        int above = 0, below = 0, neighbors = 0, fars = 0;
+        Set<Integer> aboveIds = new HashSet<Integer>();
+        Set<Integer> belowIds = new HashSet<Integer>();
+
+
+        for (int quartile = 0; quartile < hist.hist.length; quartile++ ) {
+            if (quartile / (double)hist.hist.length <= 0.05) {
+                fars += hist.hist[quartile];
+            }
+            else if (quartile / (double)hist.hist.length >= 0.95) {
+                neighbors += hist.hist[quartile];
+            }
+            else if (quartile / (double)hist.hist.length >= 0.50) {
+                above += hist.hist[quartile];
+                aboveIds.addAll(hist.ids[quartile]);
+            }
+            else {
+                below += hist.hist[quartile];
+                belowIds.addAll(hist.ids[quartile]);
+
+            }
+        }
+        System.out.printf("Far %d Neig %d Abov %d(%s) Belo %d(%s)\n", fars, neighbors,
+                            above, aboveIds.toString(),
+                            below, belowIds.toString());
+    }
+
 
     @Test
     public void testEncodedSimilarity() {
-        RandomVectorFactory factory = new SeededRandomVectorFactory(0,2);
 
         double vect1[] = {0.5,0.5};
         double vect2[] = {0.4,0.5};
@@ -54,25 +86,47 @@ public class RandomProjectionTreeTest {
 
         int identicals[] = new int[4];
 
+        double allVect[][] = {vect1, vect2, vect3, vect4};
+
+        RandomVectorFactory factory = new SeededRandomVectorFactory(979, 2);
+
+        int treeDepth = 10;
+
         for (int i = 0; i < 10; i++) {
-            RandomProjectionTree rp = new RandomProjectionTree(10, factory);
+            Histogram hists[] = new Histogram[10];
+            RandomProjectionTree rp = new RandomProjectionTree(treeDepth, factory);
 
-            String proj1 = rp.encodeProjection(vect1, 2);
-            String proj2 = rp.encodeProjection(vect2, 2);
-            String proj3 = rp.encodeProjection(vect3, 2);
-            String proj4 = rp.encodeProjection(vect4, 2);
+            int currProj = 0;
+            for (double[] proj: rp._projections) {
+                hists[currProj] = VectorUtils.projectionPerformance(allVect, proj);
+                histogramReport(hists[currProj]);
+                currProj++;
+            }
 
-            if (proj1.equals(proj1)) {
-                identicals[0]++;
-            }
-            if (proj2.equals(proj1)) {
-                identicals[1]++;
-            }
-            if (proj3.equals(proj1)) {
-                identicals[2]++;
-            }
-            if (proj4.equals(proj1)) {
-                identicals[3]++;
+            String enc1 = rp.encodeProjection(vect1, treeDepth);
+            String enc2 = rp.encodeProjection(vect2, treeDepth);
+            String enc3 = rp.encodeProjection(vect3, treeDepth);
+            String enc4 = rp.encodeProjection(vect4, treeDepth);
+
+            for (int proj = 0; proj < treeDepth; proj++) {
+
+                char enc1c = enc1.charAt(proj);
+                char enc2c = enc2.charAt(proj);
+                char enc3c = enc3.charAt(proj);
+                char enc4c = enc4.charAt(proj);
+
+                if (enc1c == enc1c) {
+                    identicals[0]++;
+                }
+                if (enc2c == enc1c) {
+                    identicals[1]++;
+                }
+                if (enc3c == enc1c) {
+                    identicals[2]++;
+                }
+                if (enc4c == enc1c) {
+                    identicals[3]++;
+                }
             }
         }
 

@@ -36,7 +36,6 @@ public class QueryBuilder {
 
         // collect every query token, turn into prefix query
         List<BooleanClause> bcs = new ArrayList<BooleanClause>();
-        BooleanQuery bq = new BooleanQuery.Builder().build();
         TermToBytesRefAttribute termAtt = tokenizer.getAttribute(TermToBytesRefAttribute.class);
         while (tokenizer.incrementToken()) {
             Query pq = new PrefixQuery(new Term(field, termAtt.getBytesRef()));
@@ -44,6 +43,8 @@ public class QueryBuilder {
         }
         tokenizer.end();
 
-        return bqb.build();
+        BooleanQuery bq = bqb.build();
+        bq.setMaxClauseCount(10000);
+        return bq;
     }
 }
