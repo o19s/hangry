@@ -1,5 +1,5 @@
 # hangry
-Hangry is an attempt to do Approximate Nearest Neighbors in Lucene search using just terms in the inverted index, where normal query-time term search can perform ANN
+Hangry is an attempt to do Approximate Nearest Neighbors in Lucene search using just terms in the inverted index and standard Lucene queries.
 
 **This is very experimental code**, and a work in progress. Though we welcome your testing and input to make a less of a work in progress! For a "demo" see [this test](https://github.com/o19s/hangry/blob/master/src/test/java/com/o19s/hangry/VectorFieldTest.java#L114)
 
