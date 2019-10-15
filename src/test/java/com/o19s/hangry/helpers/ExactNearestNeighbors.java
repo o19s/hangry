@@ -3,11 +3,13 @@ package com.o19s.hangry.helpers;
 import com.o19s.hangry.randproj.VectorUtils;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class ExactNearestNeighbors {
+public class ExactNearestNeighbors  {
 
+    double[][] vectors;
 
     public static class LabeledVectorCompare implements Comparator<LabeledVector> {
 
@@ -26,12 +28,19 @@ public class ExactNearestNeighbors {
         }
     }
 
-    public static SortedSet<LabeledVector> nearestNeighbors(double[][] vectors, double[] queryVector) {
-        SortedSet<LabeledVector> sortedSet = new TreeSet<>(new LabeledVectorCompare(queryVector));
+
+    public ExactNearestNeighbors(double[][] vectors) {
+        this.vectors = vectors;
+    }
+
+    // Return a sorted list of vectors close to the queryVector
+    public SortedSet<LabeledVector> query(double[] queryVector) {
+        SortedSet<LabeledVector> sortedSet = new TreeSet<LabeledVector>(new LabeledVectorCompare(queryVector));
         for (int i = 0; i < vectors.length; i++) {
             boolean addedDoc = sortedSet.add(new LabeledVector(i, vectors[i]));
             assert(addedDoc);
         }
         return sortedSet;
     }
+
 }

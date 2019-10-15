@@ -2,7 +2,7 @@ package com.o19s.hangry;
 
 import com.o19s.hangry.helpers.ExactNearestNeighbors;
 import com.o19s.hangry.helpers.LabeledVector;
-import com.o19s.hangry.randproj.BestRandomVectorFactory;
+import com.o19s.hangry.randproj.EvenSplitsVectorFactory;
 import com.o19s.hangry.randproj.Histogram;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import com.o19s.hangry.randproj.RandomVectorFactory;
@@ -17,7 +17,6 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -245,7 +244,7 @@ public class VectorFieldTest {
 
             double[][] allVectors = manyVectors(NUM_DOCS, DIMENSIONS);
 
-            RandomVectorFactory bestFactory = new BestRandomVectorFactory(System.currentTimeMillis(), allVectors);
+            RandomVectorFactory bestFactory = new EvenSplitsVectorFactory(System.currentTimeMillis(), allVectors);
 
             double[] mins = new double[DIMENSIONS];
             double[] maxs = new double[DIMENSIONS];
@@ -263,12 +262,13 @@ public class VectorFieldTest {
 
             double[] queryVector = seededFactory.nextVector();
 
-            SortedSet<LabeledVector> nearestNeighbors = ExactNearestNeighbors.nearestNeighbors(allVectors, queryVector);
-            double farthestDistance = VectorUtils.euclidianDistance(nearestNeighbors.last().vector, queryVector);
+            ExactNearestNeighbors nearestNeighbors = new ExactNearestNeighbors(allVectors);
+            SortedSet<LabeledVector> nearestNeighbResults =  nearestNeighbors.query(queryVector);
+            double farthestDistance = VectorUtils.euclidianDistance(nearestNeighbResults.last().vector, queryVector);
 
             System.out.printf("Running Exact Nearest Neighbor (Farthest %f)\n", farthestDistance);
 
-            Iterator<LabeledVector> iter = nearestNeighbors.iterator();
+            Iterator<LabeledVector> iter = nearestNeighbResults.iterator();
             int i = 0;
             double lastEuclidean = 0;
             while (iter.hasNext()) {

@@ -53,6 +53,7 @@ public class VectorUtils {
         int vectIdx = 0;
         for (double[] vector: allVectors) {
             if (activeIds.contains(vectIdx)) {
+                double dotProd = dotProduct(projection, vector);
                 double neighDist = neighorDistance(projection, vector);
                 h.record(neighDist, vectIdx);
             }

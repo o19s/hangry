@@ -35,7 +35,7 @@ public class RandomProjectionTree {
             same += sameSign(dp1, dp2);
 
         }
-        return same / (double)_projections.length;
+        return same / (double) _projections.length;
     }
 
     // How close does vector come to the neighborhood
@@ -45,6 +45,9 @@ public class RandomProjectionTree {
         double selfProd = VectorUtils.dotProduct(_projections[projection], _projections[projection]);
         double vectProd = VectorUtils.dotProduct(vector, _projections[projection]);
         return vectProd / selfProd;
+    }
+    public String encodeProjection(double[] vect) {
+        return this.encodeProjection(vect, _projections.length);
     }
 
     public String encodeProjection(double[] vect, int depth) {
@@ -86,8 +89,8 @@ public class RandomProjectionTree {
 //            else {
                 // these are 'near-planar' as in close to the
                 // hyperplane
-                double sign = Math.signum(VectorUtils.dotProduct(vect, _projections[i]));
-                if (sign > 0) {
+                double sign = Math.signum(VectorUtils.dotProduct(VectorUtils.normalize(vect), _projections[i]));
+                if (sign >= 0) {
                     s.append('+');
                 } else {
                     s.append('-');

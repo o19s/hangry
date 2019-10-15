@@ -1,6 +1,5 @@
 package com.o19s.hangry;
 
-import com.o19s.hangry.randproj.BestRandomVectorFactory;
 import com.o19s.hangry.randproj.Histogram;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import com.o19s.hangry.randproj.RandomVectorFactory;
