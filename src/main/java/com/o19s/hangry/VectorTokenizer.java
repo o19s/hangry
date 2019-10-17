@@ -3,7 +3,7 @@ package com.o19s.hangry;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-
+import org.apache.lucene.search.BoostAttribute;
 import java.io.IOException;
 
 public final class VectorTokenizer extends TokenStream {
@@ -21,6 +21,8 @@ public final class VectorTokenizer extends TokenStream {
 
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
+    private final BoostAttribute boostAtt = addAttribute(BoostAttribute.class);
+
 
     static public int FULL_DEPTH = -1;
 
@@ -50,6 +52,8 @@ public final class VectorTokenizer extends TokenStream {
             termAtt.append((char)(currProj >> 8));
             termAtt.append((char)currProj);
             termAtt.append(randomProjections[currProj].encodeProjection(vector, depth));
+
+            boostAtt.setBoost(randomProjections[currProj].depthBoost(depth));
             currProj++;
             return true;
         }

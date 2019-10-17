@@ -7,14 +7,29 @@ package com.o19s.hangry.randproj;
 public class RandomProjectionTree {
     // Assumes normalized vector inputs
 
-    public double[][] _projections;
+    public double[][] projections;
 
     public RandomProjectionTree(int depth, RandomVectorFactory vectFactory) {
-        _projections = new double[depth][];
+        this.projections = new double[depth][];
 
         vectFactory.reset();
+        int trimTo = -1;
         for (int i = 0; i < depth; i++) {
-            _projections[i] = vectFactory.nextVector();
+            this.projections[i] = vectFactory.nextVector();
+            if (this.projections[i] == null) {
+                trimTo = i;
+                break;
+            }
+        }
+
+        // vector factory may return null, so we
+        // trim out the nulls at the end
+        if (trimTo >= 0 ) {
+            double[][] proj = new double[trimTo][];
+            for (int i = 0; i < trimTo; i++) {
+                proj[i] = this.projections[i];
+            }
+            this.projections = proj;
         }
     }
 
@@ -23,31 +38,35 @@ public class RandomProjectionTree {
     }
 
     public int getDepth() {
-        return _projections.length;
+        return projections.length;
     }
 
 
     public double similarity(double[] vect1, double[] vect2) {
         double same = 0;
-        for (double[] projection : _projections) {
+        for (double[] projection : projections) {
             double dp1 = VectorUtils.dotProduct(vect1, projection);
             double dp2 = VectorUtils.dotProduct(vect2, projection);
             same += sameSign(dp1, dp2);
 
         }
-        return same / (double) _projections.length;
+        return same / (double) projections.length;
     }
 
     // How close does vector come to the neighborhood
     // of this projection?
     public double neighborhoodDistance(int projection, double[] vector) {
         // TODO do this before hand
-        double selfProd = VectorUtils.dotProduct(_projections[projection], _projections[projection]);
-        double vectProd = VectorUtils.dotProduct(vector, _projections[projection]);
+        double selfProd = VectorUtils.dotProduct(projections[projection], projections[projection]);
+        double vectProd = VectorUtils.dotProduct(vector, projections[projection]);
         return vectProd / selfProd;
     }
     public String encodeProjection(double[] vect) {
-        return this.encodeProjection(vect, _projections.length);
+        return this.encodeProjection(vect, projections.length);
+    }
+
+    public float depthBoost(int depth) {
+        return 1.0f;
     }
 
     public String encodeProjection(double[] vect, int depth) {
@@ -89,7 +108,7 @@ public class RandomProjectionTree {
 //            else {
                 // these are 'near-planar' as in close to the
                 // hyperplane
-                double sign = Math.signum(VectorUtils.dotProduct(VectorUtils.normalize(vect), _projections[i]));
+                double sign = Math.signum(VectorUtils.dotProduct(VectorUtils.normalize(vect), projections[i]));
                 if (sign >= 0) {
                     s.append('+');
                 } else {

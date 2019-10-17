@@ -94,7 +94,7 @@ public class RandomProjectionTreeTest {
             RandomProjectionTree rp = new RandomProjectionTree(treeDepth, factory);
 
             int currProj = 0;
-            for (double[] proj: rp._projections) {
+            for (double[] proj: rp.projections) {
                 hists[currProj] = VectorUtils.projectionPerformance(allVect, proj);
                 histogramReport(hists[currProj]);
                 currProj++;

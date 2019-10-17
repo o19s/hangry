@@ -5,6 +5,7 @@ import com.o19s.hangry.helpers.LabeledVector;
 import com.o19s.hangry.randproj.EvenSplitsVectorFactory;
 import com.o19s.hangry.randproj.RandomProjectionTree;
 import com.o19s.hangry.randproj.RandomVectorFactory;
+import com.o19s.hangry.randproj.SeededRandomVectorFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,13 +24,15 @@ public class EvenSplitsVectorFactoryTest {
         int same = 0;
         for (int i = 0; i < path1.length(); i++) {
             if (path1.charAt(i) == path2.charAt(i)) {
-                same += 1; // pow(2, (path1.length() - i));
+                same += pow(2, (path1.length() - i));
+            } else {
+                same -= pow(2, (path1.length() - i));
             }
         }
         double diff =  ((double) same) / path1.length();
         //System.out.println(path1);
         System.out.println(path2);
-//        System.out.println(Double.toString(diff));
+        System.out.println(Double.toString(diff));
 //        System.out.println("======================");
         return ((double) same) / path1.length();
 
@@ -43,12 +46,15 @@ public class EvenSplitsVectorFactoryTest {
                 {0.11,0.11,0.09},
                 {0.12,0.1,0.1},
                 {0.12,0.11,0.1},
-                {-0.5,-0.5,-0.5},
-                {-0.4,-0.5,-0.5}
+                {-0.5,-0.5,-0.5}, // -0.81,0.28,0.51
+                {-0.4,-0.5,-0.5} // -0.81,0.28,0.51
         };
 
-        RandomVectorFactory vectorFactory = new EvenSplitsVectorFactory(0, unbalancedVectorSpace);
-        RandomProjectionTree rpTree = new RandomProjectionTree(5,  vectorFactory);
+        RandomVectorFactory vectorFactory = new EvenSplitsVectorFactory(10, unbalancedVectorSpace);
+
+        //RandomVectorFactory seededFactory = new SeededRandomVectorFactory(3,3);
+
+        RandomProjectionTree rpTree = new RandomProjectionTree(6,  vectorFactory);
 
         double queryVector[] = unbalancedVectorSpace[0];
         ExactNearestNeighbors nearestNeighbors = new ExactNearestNeighbors(unbalancedVectorSpace);

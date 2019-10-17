@@ -19,6 +19,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.SortedSet;
 
+import static java.lang.StrictMath.pow;
 import static junit.framework.TestCase.assertEquals;
 
 public class VectorFieldTest {
@@ -221,16 +223,18 @@ public class VectorFieldTest {
     public void testApproximateNearestNeighborPerf() throws IOException {
 
         // Test params
-        int DIMENSIONS = 300;
+        int DIMENSIONS = 100;
         int TOP_N_TO_TEST = 100;
-        int NUM_PROJ_TREES = 1024;
-        int PROJ_TREE_DEPTH = 12;
+        int NUM_PROJ_TREES = 32;
+        int PROJ_TREE_DEPTH = 8;
         int MIN_TREE_MATCH = 1;
-        int QUERY0_PROJ_TREE_DEPTH = 1; // least precise
-        int QUERY1_PROJ_TREE_DEPTH = 2;
-        int QUERY2_PROJ_TREE_DEPTH = 3; // most precise
+//        int QUERY0_PROJ_TREE_DEPTH = 1; // least precise
+//        int QUERY1_PROJ_TREE_DEPTH = 2;
+//        int QUERY2_PROJ_TREE_DEPTH = 3; // most precise
+//        int QUERY3_PROJ_TREE_DEPTH = 4;
+//        int QUERY4_PROJ_TREE_DEPTH = 12; // most precise
 
-        int NUM_DOCS = 10000;
+        int NUM_DOCS = 5000;
         int TIMES = 10;
 
         double precSum = 0;
@@ -252,7 +256,10 @@ public class VectorFieldTest {
 
             RandomProjectionTree rp[] = new RandomProjectionTree[NUM_PROJ_TREES];
             for (int i = 0; i < rp.length; i++) {
-                rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, seededFactory);
+                if (i % 10 == 0) {
+                    System.out.printf("Built Proj %d\n", i);
+                }
+                rp[i] = new RandomProjectionTree(PROJ_TREE_DEPTH, bestFactory);
             }
 
             System.out.println("Indexing");
@@ -285,14 +292,51 @@ public class VectorFieldTest {
             System.out.println();
 
             QueryBuilder qb = new QueryBuilder(rp);
-            Query q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH, MIN_TREE_MATCH);
-            Query q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH);
-            Query q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH);
-
             BooleanQuery.Builder bqb = new BooleanQuery.Builder();
-            bqb.add(q0, BooleanClause.Occur.SHOULD);
-            bqb.add(q1, BooleanClause.Occur.SHOULD);
-            bqb.add(q2, BooleanClause.Occur.SHOULD);
+            for (int queryDepth = 1; queryDepth <= PROJ_TREE_DEPTH; queryDepth++) {
+                double boost = pow(10,PROJ_TREE_DEPTH - queryDepth);
+                Query q0 = qb.buildQuery("vector", queryVector,queryDepth,1);
+                q0 = new BoostQuery(q0, (float)boost);
+                bqb.add(q0, BooleanClause.Occur.SHOULD);
+            }
+//            Query q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH);
+//            q0 = new BoostQuery(q0, 2);
+//            Query q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH);
+//            q1 = new BoostQuery(q1, 4);
+//            Query q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH);
+//            q2 = new BoostQuery(q2, 8);
+//            Query q3 = qb.buildQuery("vector", queryVector, QUERY3_PROJ_TREE_DEPTH);
+//            q3 = new BoostQuery(q3, 16);
+//            Query q4 = qb.buildQuery("vector", queryVector, QUERY4_PROJ_TREE_DEPTH);
+//            q4 = new BoostQuery(q4, 32);
+////
+////            BooleanQuery.Builder bqb = new BooleanQuery.Builder();
+////            bqb.add(q0, BooleanClause.Occur.SHOULD);
+////            bqb.add(q1, BooleanClause.Occur.SHOULD);
+////            bqb.add(q2, BooleanClause.Occur.SHOULD);
+////            bqb.add(q3, BooleanClause.Occur.SHOULD);
+//            bqb.add(q4, BooleanClause.Occur.SHOULD);
+//
+//            q0 = qb.buildQuery("vector", queryVector, QUERY0_PROJ_TREE_DEPTH, 3);
+//            q0 = new BoostQuery(q0, 20);
+//
+//            q1 = qb.buildQuery("vector", queryVector, QUERY1_PROJ_TREE_DEPTH, 3);
+//            q1 = new BoostQuery(q1, 40);
+//
+//            q2 = qb.buildQuery("vector", queryVector, QUERY2_PROJ_TREE_DEPTH, 3);
+//            q2 = new BoostQuery(q2, 80);
+//
+//            q3 = qb.buildQuery("vector", queryVector, QUERY3_PROJ_TREE_DEPTH, 3);
+//            q3 = new BoostQuery(q3, 160);
+//
+//            q4 = qb.buildQuery("vector", queryVector, QUERY4_PROJ_TREE_DEPTH, 10);
+//            q4 = new BoostQuery(q4, 320);
+//
+////            bqb.add(q0, BooleanClause.Occur.SHOULD);
+////            bqb.add(q1, BooleanClause.Occur.SHOULD);
+////            bqb.add(q2, BooleanClause.Occur.SHOULD);
+////            bqb.add(q3, BooleanClause.Occur.SHOULD);
+//            bqb.add(q4, BooleanClause.Occur.SHOULD);
 
             Query q = bqb.build();
 

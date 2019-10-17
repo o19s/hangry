@@ -1,5 +1,6 @@
 package com.o19s.hangry.randproj;
 
+import javafx.collections.transformation.SortedList;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -18,6 +19,9 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
     SeededRandomVectorFactory seeded;
     double[][] allVectors;
     List<Set<Integer>> regions;
+    Set<Integer> biggestRegion;
+
+    int numVectors;
     Set<Integer> allSet;
 
     public EvenSplitsVectorFactory(long seed, double[][] vectors) {
@@ -26,58 +30,64 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
         this.reset();
     }
 
+    private void regionReport() {
+        System.out.printf("%d regions| biggest %d | ", regions.size(), biggestRegion.size());
+
+        for (Set<Integer> region: regions) {
+            System.out.printf("%d,", region.size());
+        }
+        System.out.println();
+    }
+
     @Override
     public void reset() {
+        if (this.numVectors > 0) {
+//            System.out.printf("Resetting after %d vects\n", this.numVectors);
+//            regionReport();
+        }
         this.regions = new ArrayList<Set<Integer>>();
         allSet = new HashSet<Integer>();
+        biggestRegion = allSet;
         for (int i = 0; i < this.allVectors.length; i++) {
             allSet.add(i);
         }
         this.regions.add(allSet);
+        numVectors = 0;
     }
 
-    public Pair<Set<Integer>, Set<Integer>> histogramReport(Histogram hist) {
-        int above = 0, below = 0, neighbors = 0, fars = 0;
+    public Pair<Set<Integer>, Set<Integer>> histogramReport(Set<Integer> region, double[] projection) {
+
         Set<Integer> aboveIds = new HashSet<Integer>();
         Set<Integer> belowIds = new HashSet<Integer>();
 
-
-        // THERE IS A BUG IN HERE!
-
-        for (int quantile = 0; quantile < hist.hist.length; quantile++) {
-            double where = quantile / (double) hist.hist.length;
-            if (where >= 0.50) {
-                above += hist.hist[quantile];
-                aboveIds.addAll(hist.ids[quantile]);
+        int lhs = 0;
+        int rhs = 0;
+        for (Integer id: region) {
+            double[] thisVect = allVectors[id.intValue()];
+            double dotProd = VectorUtils.dotProduct(thisVect, projection);
+            if (dotProd >= 0) {
+                aboveIds.add(id);
             } else {
-                below += hist.hist[quantile];
-                belowIds.addAll(hist.ids[quantile]);
-
+                belowIds.add(id);
             }
         }
         return new Pair<Set<Integer>, Set<Integer>>(belowIds, aboveIds);
     }
 
-    private int projectionScore(double[] projection) {
-        int score = 0;
-        int regIdx = 0;
-        for (Set<Integer> region: regions) {
-            // split this region with projection
-            int lhs = 0;
-            int rhs = 0;
-            for (Integer id: region) {
-                double[] thisVect = allVectors[id.intValue()];
-                double dotProd = VectorUtils.dotProduct(thisVect, projection);
-                if (dotProd >= 0) {
-                    rhs++;
-                } else {
-                    lhs++;
-                }
+    private int projectionScore(double[] projection, Set<Integer> biggestRegion) {
+
+        int lhs = 0;
+        int rhs = 0;
+        for (Integer id: biggestRegion) {
+            double[] thisVect = allVectors[id.intValue()];
+            double dotProd = VectorUtils.dotProduct(thisVect, projection);
+            if (dotProd >= 0) {
+                rhs++;
+            } else {
+                lhs++;
             }
-            score += region.size() - abs(lhs-rhs);
-            //System.out.printf("%d - %d %d - %d\n", regIdx, lhs, rhs, score);
-            regIdx++;
         }
+        int score = biggestRegion.size() - abs(lhs-rhs);
         return score;
     }
 
@@ -88,22 +98,6 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
             return seeded.nextVector();
         }
 
-
-//        int max = 0;
-//        Set<Integer> biggestRegion = null;
-//        for (Set<Integer> ids: regions) {
-//            if (max < ids.size()) {
-//                max = ids.size();
-//                biggestRegion = ids;
-//            }
-//        }
-//
-//        if (max == 1) {
-//            reset();
-//            biggestRegion = regions.get(0);
-//        }
-
-
         Pair<Set<Integer>, Set<Integer>> bestSplit = null;
         double[] bestProjection = null;
         int bestScore = 0;
@@ -111,45 +105,66 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
         int tries = 0;
         int splitness = 0;
 
-        for (tries = 0; tries < 1000; tries++) {
+        //regionReport();
+        for (tries = 0; tries < 20; tries++) {
             double[] projection = seeded.nextVector();
 
             Pair<Set<Integer>, Set<Integer>> histReport = null;
-            splitness = projectionScore(projection);
+            splitness = projectionScore(projection, biggestRegion);
             if (splitness > bestScore) {
                 bestProjection = projection;
                 bestScore = splitness;
-                System.out.printf("Try %d Choosing %d\n", tries, bestScore);
+            }
+            if (splitness == biggestRegion.size()) {
+                break;
             }
         }
-        System.out.printf("Best Split %d %d\n", bestScore, tries);
         return bestProjection;
+    }
+
+    private void addRegion(Set<Integer> newRegion, List<Set<Integer>> newRegions) {
+        if (newRegion.size() > biggestRegion.size()) {
+            biggestRegion = newRegion;
+        }
+        newRegions.add(newRegion);
+    }
+
+    private void splitRegionByProjection(double[] bestProjection, Set<Integer> region, List<Set<Integer>> newRegions) {
+        Histogram hist = VectorUtils.projectionPerformance(region, this.allVectors, bestProjection);
+        Pair<Set<Integer>, Set<Integer>> histReport = histogramReport(region, bestProjection);
+        Set<Integer> lhs = histReport.getKey();
+        Set<Integer> rhs = histReport.getValue();
+        if (lhs.size() > 0) {
+            addRegion(lhs, newRegions);
+        }
+        if (rhs.size() > 0) {
+            addRegion(rhs, newRegions);
+        }
     }
 
     @Override
     public double[] nextVector() {
-        // check if we need to reset
-//        if (regions.first().size() <= 1) {
-//            reset();
-//        }
-
-
         double[] bestProjection = drawVector();
+
+        // we've exhausted our ability to split the regions further
+        // or so it seems
+        if (bestProjection == null) {
+            return null;
+        }
+
+        //scores.add(projectionScore(bestProjection));
 
         // Apply best projection and regenerate the regions
         List<Set<Integer>> newRegions = new ArrayList<Set<Integer>>();
+        //System.out.printf("Before %s\n", regions.toString());
+        biggestRegion = new TreeSet<Integer>();
         for (Set<Integer> ids: regions) {
-            Histogram hist = VectorUtils.projectionPerformance(ids, this.allVectors, bestProjection);
-            Pair<Set<Integer>, Set<Integer>> histReport = histogramReport(hist);
-            if (histReport.getValue().size() > 0) {
-                newRegions.add(histReport.getValue());
-            }
-            if (histReport.getKey().size() > 0) {
-                newRegions.add(histReport.getKey());
-            }
+            splitRegionByProjection(bestProjection, ids, newRegions);
         }
+       // System.out.printf("After %s\n", newRegions.toString());
 
         this.regions = newRegions;
+        this.numVectors++;
 
         return bestProjection;
     }
