@@ -73,8 +73,13 @@ public class RandomProjectionTree {
 
         StringBuilder s = new StringBuilder();
 
+        int depthToUse = depth;
+        if (depth > projections.length) {
+            depthToUse = projections.length;
+        }
+
         double same = 0;
-        for (int i = 0; i < depth; i++) {
+        for (int i = 0; i < depthToUse; i++) {
 //            double sign = Math.signum(VectorUtils.dotProduct(vect, _projections[i]));
             double neighborDistance = neighborhoodDistance(i, vect);
 
@@ -108,7 +113,7 @@ public class RandomProjectionTree {
 //            else {
                 // these are 'near-planar' as in close to the
                 // hyperplane
-                double sign = Math.signum(VectorUtils.dotProduct(VectorUtils.normalize(vect), projections[i]));
+                double sign = Math.signum(VectorUtils.projProduct(VectorUtils.normalize(vect), projections[i]));
                 if (sign >= 0) {
                     s.append('+');
                 } else {

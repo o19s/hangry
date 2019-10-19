@@ -74,8 +74,8 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
         return new Pair<Set<Integer>, Set<Integer>>(belowIds, aboveIds);
     }
 
-    private int projectionScore(double[] projection, Set<Integer> biggestRegion) {
-
+    protected double sizeProjectionScore(double[] projection, Set<Integer> biggestRegion) {
+        // the best projection evenly splits biggestRegion
         int lhs = 0;
         int rhs = 0;
         for (Integer id: biggestRegion) {
@@ -91,34 +91,90 @@ public class EvenSplitsVectorFactory implements RandomVectorFactory {
         return score;
     }
 
+    protected double varianceProjectionScore(double[] projection, Set<Integer> biggestRegion) {
+        // the best projection minimizes the variance
+        // on each size, as approxmated by the result of the dot
+        // product with the
+        double lhsDotsMean = 0;
+        double rhsDotsMean = 0;
+        double allDotsMean = 0;
+
+        List<Double> lhsDots = new ArrayList<Double>();
+        List<Double> rhsDots = new ArrayList<Double>();
+        List<Double> allDots = new ArrayList<Double>();
+
+
+        for (Integer id: biggestRegion) {
+            double[] thisVect = allVectors[id.intValue()];
+            double dotProd = VectorUtils.dotProduct(thisVect, projection);
+            if (dotProd >= 0) {
+                rhsDotsMean += dotProd;
+                rhsDots.add(dotProd);
+            } else {
+                lhsDotsMean += abs(dotProd);
+                lhsDots.add(abs(dotProd));
+            }
+            allDots.add(abs(dotProd));
+            allDotsMean += abs(dotProd);
+        }
+
+
+        lhsDotsMean = lhsDotsMean / lhsDots.size();
+        rhsDotsMean = rhsDotsMean / rhsDots.size();
+        allDotsMean = allDotsMean / allDots.size();
+
+        double allVar = 0;
+        for (Double dp: allDots) {
+            allVar += (dp.doubleValue() - allDotsMean) * (dp.doubleValue() - allDotsMean);
+        }
+
+        double lhsVar = 0;
+        for (Double dp: lhsDots) {
+            lhsVar += (dp.doubleValue() - lhsDotsMean) * (dp.doubleValue() - lhsDotsMean);
+        }
+
+
+        double rhsVar = 0;
+        for (Double dp: rhsDots) {
+            rhsVar += (dp.doubleValue() - rhsDotsMean) * (dp.doubleValue() - rhsDotsMean);
+        }
+
+        if (lhsDots.size() == 0) {
+            return 0;
+        }
+        if (rhsDots.size() == 0) {
+            return 0;
+        }
+
+        return allVar-(lhsVar + rhsVar);
+    }
+
     private double[] drawVector() {
         // Get biggest region to subdivide
 
-        if (regions.size() == 1) {
-            return seeded.nextVector();
-        }
+//        if (regions.size() == 1) {
+//            return seeded.nextVector();
+//        }
 
         Pair<Set<Integer>, Set<Integer>> bestSplit = null;
         double[] bestProjection = null;
-        int bestScore = 0;
+        double bestScore = 0;
 
         int tries = 0;
-        int splitness = 0;
+        double splitScore = 0;
 
         //regionReport();
-        for (tries = 0; tries < 20; tries++) {
+        for (tries = 0; tries < 4000000; tries++) {
             double[] projection = seeded.nextVector();
 
             Pair<Set<Integer>, Set<Integer>> histReport = null;
-            splitness = projectionScore(projection, biggestRegion);
-            if (splitness > bestScore) {
+            splitScore = varianceProjectionScore(projection, biggestRegion);
+            if (splitScore > bestScore) {
                 bestProjection = projection;
-                bestScore = splitness;
-            }
-            if (splitness == biggestRegion.size()) {
-                break;
+                bestScore = splitScore;
             }
         }
+        System.out.printf("Var Reduced %f\n", splitScore);
         return bestProjection;
     }
 

@@ -15,7 +15,7 @@ import static org.apache.commons.math3.util.ArithmeticUtils.pow;
 
 public class EvenSplitsVectorFactoryTest {
 
-    public static double encodingDiff(RandomProjectionTree rpTree, double[] vect1, double vect2[]) {
+    public static double encodingDiff(RandomProjectionTree rpTree, double[] vect1, double vect2[], boolean usePowers) {
         String path1 = rpTree.encodeProjection(vect1);
         String path2 = rpTree.encodeProjection(vect2);
 
@@ -23,10 +23,15 @@ public class EvenSplitsVectorFactoryTest {
 
         int same = 0;
         for (int i = 0; i < path1.length(); i++) {
+            double score = 1;
+            if (usePowers) {
+                score = pow(2, (path1.length() - i));
+            }
+
             if (path1.charAt(i) == path2.charAt(i)) {
-                same += pow(2, (path1.length() - i));
+                same += score;
             } else {
-                same -= pow(2, (path1.length() - i));
+                same -= score;
             }
         }
         double diff =  ((double) same) / path1.length();
@@ -41,32 +46,44 @@ public class EvenSplitsVectorFactoryTest {
     @Test
     public void testUnbalancedVectorSpace() {
         double [][] unbalancedVectorSpace = {
-                {0.1,0.1,0.95},
-                {0.12,0.1,0.11},
-                {0.11,0.11,0.09},
-                {0.12,0.1,0.1},
-                {0.12,0.11,0.1},
-                {-0.5,-0.5,-0.5}, // -0.81,0.28,0.51
-                {-0.4,-0.5,-0.5} // -0.81,0.28,0.51
+                {0.1,0.1,0.95,0.5},
+                {0.12,0.1,0.11,0.3},
+                {0.11,0.11,0.09,0.1},
+                {0.12,0.1,0.1, 0.05},
+                {0.12,0.11,0.1, 0.10},
+                {-0.5,-0.5,-0.5, -0.5},
+                {-0.4,-0.5,-0.5, -0.2}
         };
 
-        RandomVectorFactory vectorFactory = new EvenSplitsVectorFactory(10, unbalancedVectorSpace);
+        for (int seed = 0; seed < 50; seed++) {
 
-        //RandomVectorFactory seededFactory = new SeededRandomVectorFactory(3,3);
+            RandomVectorFactory evenSplitVectorFactory = new EvenSplitsVectorFactory(seed, unbalancedVectorSpace);
+            RandomVectorFactory seededFactory = new SeededRandomVectorFactory(seed, unbalancedVectorSpace[0].length);
 
-        RandomProjectionTree rpTree = new RandomProjectionTree(6,  vectorFactory);
+            RandomProjectionTree rpTreeEven = new RandomProjectionTree(6, evenSplitVectorFactory);
+            RandomProjectionTree rpTreeRegular = new RandomProjectionTree(6, seededFactory);
 
-        double queryVector[] = unbalancedVectorSpace[0];
-        ExactNearestNeighbors nearestNeighbors = new ExactNearestNeighbors(unbalancedVectorSpace);
+            double queryVector[] = unbalancedVectorSpace[0];
+            ExactNearestNeighbors nearestNeighbors = new ExactNearestNeighbors(unbalancedVectorSpace);
 
+            SortedSet<LabeledVector> sortedSet = nearestNeighbors.query(queryVector);
 
-        SortedSet<LabeledVector> sortedSet = nearestNeighbors.query(queryVector);
+            System.out.println("");
+            System.out.println("Even Split");
+            for (LabeledVector labeledVector : sortedSet) {
+                double evenDiff = encodingDiff(rpTreeEven, queryVector, labeledVector.vector, true);
+            }
 
-        double lastDiff = Double.MAX_VALUE;
-        for (LabeledVector labeledVector: sortedSet) {
-            double thisDiff = encodingDiff(rpTree, queryVector, labeledVector.vector);
-            //Assert.assertTrue("This vector should be farther from the last one", thisDiff < lastDiff);
-            lastDiff = thisDiff;
+            System.out.println("");
+            System.out.println("Regular Split");
+            for (LabeledVector labeledVector : sortedSet) {
+                double regularDiff = encodingDiff(rpTreeRegular, queryVector, labeledVector.vector, false);
+                //Assert.assertTrue("This vector should be same or farther from the last one", thisDiff <= lastDiff);
+                //lastDiff = thisDiff;
+            }
+            System.out.println("");
+            System.out.println("");
+
         }
     }
 

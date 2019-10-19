@@ -14,6 +14,17 @@ public class VectorUtils {
         return sum;
     }
 
+    // Performs a dot product up until the size of vect1 for speed
+    // if vect2.length < vect1.length, you get a ArrayIndexOutOfBoundsException
+    public static double projProduct(double[] vect1, double[] vect2) {
+        double sum = 0;
+        for (int i = 0; i < vect1.length; i++) {
+            sum += vect1[i] * vect2[i+1];
+        }
+        return sum + vect2[0];
+    }
+
+
     public static double magnitude(double[] vect) {
         double sum = 0.0;
         for (double v : vect) {
