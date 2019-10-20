@@ -94,12 +94,12 @@ public class AnnPerfTest  {
 
             QueryBuilder qb = new QueryBuilder(this.rpTrees);
             BooleanQuery.Builder bqb = new BooleanQuery.Builder();
-            for (int queryDepth = 1; queryDepth <= this.hyperParams.treeDepth; queryDepth++) {
+            for (int queryDepth = 3; queryDepth <= this.hyperParams.treeDepth; queryDepth++) {
                 int minMatch = 1;
                 if (queryDepth == 1) {
                     minMatch = hyperParams.minShouldMatchDepth1;
                 }
-                Query q = qb.buildQuery("vector", queryVector,queryDepth,1);
+                Query q = qb.buildQuery("vector", queryVector,queryDepth,minMatch);
                 if (this.hyperParams.treeBuildingVectFactoryClass == EvenSplitsVectorFactory.class) {
                     double boost = Math.pow(2, this.hyperParams.treeDepth - queryDepth);
                     q = new BoostQuery(q, (float)boost);
@@ -245,7 +245,7 @@ public class AnnPerfTest  {
 
         for (int numTrees = 128; numTrees <= 128; numTrees +=16) {
             for (int treeDepth = 8; treeDepth <= 8; treeDepth+= 4) {
-                for (int minShouldMatchDepth1 = 1; minShouldMatchDepth1 < numTrees; minShouldMatchDepth1+= 12) {
+                for (int minShouldMatchDepth1 = 1; minShouldMatchDepth1 < numTrees; minShouldMatchDepth1+= 24) {
                     for (int treeBuildFact = 1; treeBuildFact < 2; treeBuildFact++) {
                         Class<? extends RandomVectorFactory> treeBuildingFactoryClass = null;
 

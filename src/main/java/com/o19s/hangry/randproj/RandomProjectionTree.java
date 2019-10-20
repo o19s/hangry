@@ -113,7 +113,7 @@ public class RandomProjectionTree {
 //            else {
                 // these are 'near-planar' as in close to the
                 // hyperplane
-                double sign = Math.signum(VectorUtils.projProduct(VectorUtils.normalize(vect), projections[i]));
+                double sign = Math.signum(VectorUtils.dotProduct(VectorUtils.normalize(vect), projections[i]));
                 if (sign >= 0) {
                     s.append('+');
                 } else {
