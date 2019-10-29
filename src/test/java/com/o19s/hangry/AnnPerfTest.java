@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.Math.abs;
-import static javax.management.Query.TIMES;
 
 public class AnnPerfTest  {
 
@@ -94,11 +93,11 @@ public class AnnPerfTest  {
 
             QueryBuilder qb = new QueryBuilder(this.rpTrees);
             BooleanQuery.Builder bqb = new BooleanQuery.Builder();
-            for (int queryDepth = 3; queryDepth <= this.hyperParams.treeDepth; queryDepth++) {
-                int minMatch = 1;
-                if (queryDepth == 1) {
-                    minMatch = hyperParams.minShouldMatchDepth1;
-                }
+            for (int queryDepth = 1; queryDepth <= 1/*this.hyperParams.treeDepth*/; queryDepth++) {
+                int minMatch = Math.min(queryDepth, hyperParams.treeShouldMatch);
+//                if (queryDepth == 1) {
+//                    minMatch = hyperParams.treeShouldMatch;
+//                }
                 Query q = qb.buildQuery("vector", queryVector,queryDepth,minMatch);
                 if (this.hyperParams.treeBuildingVectFactoryClass == EvenSplitsVectorFactory.class) {
                     double boost = Math.pow(2, this.hyperParams.treeDepth - queryDepth);
@@ -149,15 +148,15 @@ public class AnnPerfTest  {
         // Hyper params we would like to find an optimum for
         public int numTrees;
         public int treeDepth;
-        public int minShouldMatchDepth1;
+        public int treeShouldMatch;
         Class<? extends RandomVectorFactory> treeBuildingVectFactoryClass;
         public double precision;
 
-        HyperParameters(StaticParams staticParams, int numTrees, int treeDepth, int minShouldMatchDepth1, Class<? extends RandomVectorFactory> treeBuildingFactoryClass) {
+        HyperParameters(StaticParams staticParams, int numTrees, int treeDepth, int treesShouldMatch, Class<? extends RandomVectorFactory> treeBuildingFactoryClass) {
             this.staticParams = staticParams;
             this.numTrees = numTrees;
             this.treeDepth = treeDepth;
-            this.minShouldMatchDepth1 = minShouldMatchDepth1;
+            this.treeShouldMatch = treesShouldMatch;
             this.treeBuildingVectFactoryClass = treeBuildingFactoryClass;
         }
 
@@ -212,7 +211,7 @@ public class AnnPerfTest  {
         int TIMES = 10;
 
         System.out.println("============NEW TEST!============");
-        System.out.format("trees %d depth %d minshouldmatch %d treebuild %s\n",params.numTrees, params.treeDepth, params.minShouldMatchDepth1, params.treeBuildingVectFactoryClass);
+        System.out.format("trees=%d, depth=%d, mm=%d, tree created with %s\n",params.numTrees, params.treeDepth, params.treeShouldMatch, params.treeBuildingVectFactoryClass);
 
 
         for (int run = 0; run < TIMES; run++) {
@@ -234,9 +233,9 @@ public class AnnPerfTest  {
     public void testApproximateNearestNeighborPerf() throws IOException {
 
         int NUM_DOCS = 10000;
-        int DIMS = 32;
+        int DIMS = 100;
         int TOPN_TO_TEST = 100;
-        boolean UNBALANCED = false;
+        boolean UNBALANCED = true;
 
         StaticParams staticTetsParams = new StaticParams(NUM_DOCS, DIMS, TOPN_TO_TEST, UNBALANCED);
 
@@ -244,8 +243,8 @@ public class AnnPerfTest  {
         double bestPrecision = 0;
 
         for (int numTrees = 128; numTrees <= 128; numTrees +=16) {
-            for (int treeDepth = 8; treeDepth <= 8; treeDepth+= 4) {
-                for (int minShouldMatchDepth1 = 1; minShouldMatchDepth1 < numTrees; minShouldMatchDepth1+= 24) {
+            for (int treeDepth = 5; treeDepth <= 5; treeDepth+= 4) {
+                for (int treesShouldMatch = 1; treesShouldMatch < numTrees; treesShouldMatch+= 24) {
                     for (int treeBuildFact = 1; treeBuildFact < 2; treeBuildFact++) {
                         Class<? extends RandomVectorFactory> treeBuildingFactoryClass = null;
 
@@ -258,7 +257,7 @@ public class AnnPerfTest  {
                         }
 
 
-                        HyperParameters params = new HyperParameters(staticTetsParams, numTrees, treeDepth, minShouldMatchDepth1, treeBuildingFactoryClass);
+                        HyperParameters params = new HyperParameters(staticTetsParams, numTrees, treeDepth, treesShouldMatch, treeBuildingFactoryClass);
                         double precision = runTest(params);
                         if (precision > bestPrecision) {
                             bestPrecision = precision;
@@ -266,7 +265,7 @@ public class AnnPerfTest  {
                             System.out.printf("Best Run (%f) trees %d depth %d minshouldmatch %d treebuild %s\n",
                                     bestParams.precision,
                                     bestParams.numTrees,
-                                    bestParams.treeDepth, bestParams.minShouldMatchDepth1, bestParams.treeBuildingVectFactoryClass.toString());
+                                    bestParams.treeDepth, bestParams.treeShouldMatch, bestParams.treeBuildingVectFactoryClass.toString());
                         }
                     }
                 }
@@ -275,7 +274,7 @@ public class AnnPerfTest  {
         System.out.printf("Best Run (%f) trees %d depth %d minshouldmatch %d treebuild %s\n",
                 bestParams.precision,
                 bestParams.numTrees,
-                bestParams.treeDepth, bestParams.minShouldMatchDepth1, bestParams.treeBuildingVectFactoryClass.toString());
+                bestParams.treeDepth, bestParams.treeShouldMatch, bestParams.treeBuildingVectFactoryClass.toString());
 
     }
 
